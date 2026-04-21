@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h2>My To-Do List</h2>
+<input type="text" id="taskInput" placeholder="New task...">
+<button onclick="addTask()">Add Task</button>
+<ul id="taskList"></ul>
+<script>
+
+        async function loadTasks() {
+
+            const res = await fetch('/todos');
+
+            const tasks = await res.json();
+
+            const list = document.getElementById('taskList');
+
+            list.innerHTML = tasks.map(t => 
+
+                `<li>${t.task} <button onclick="deleteTask(${t.id})">Delete</button></li>`
+
+            ).join('');
+
+        }
+
+        async function addTask() {
+
+            const task = document.getElementById('taskInput').value;
+
+            await fetch('/add', {
+
+                method: 'POST',
+
+                headers: {'Content-Type': 'application/json'},
+
+                body: JSON.stringify({task})
+
+            });
+
+            document.getElementById('taskInput').value = '';
+
+            loadTasks();
+
+        }
+
+        async function deleteTask(id) {
+
+            await fetch(`/delete/${id}`, { method: 'DELETE' });
+
+            loadTasks();
+
+        }
+
+        loadTasks();
+</script>
+</body>
+</html>
+ 
