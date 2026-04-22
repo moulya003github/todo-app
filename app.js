@@ -1,49 +1,47 @@
 const express = require('express');
-const { Client } = require('pg');
+
+const { Pool } = require('pg');
 
 const app = express();
+
+const db = new Pool({ user: 'postgres', host: 'db', database: 'testdb', password: 'password', port: 5432 });
+
+async function start() {
+
+  while (true) {
+
+    try {
+
+      await db.query('CREATE TABLE IF NOT EXISTS todos (id SERIAL PRIMARY KEY, task TEXT)');
+
+      console.log("DB Connected");
+
+      break;
+
+    } catch (e) {
+
+      console.log("Waiting for DB...");
+
+      await new Promise(r => setTimeout(r, 3000));
+
+    }
+
+  }
+
+}
+
+start();
+
 app.use(express.json());
-app.use(express.static('.'));
 
-const client = new Client({
-host: 'db',
-user: 'postgres',
-password: 'password',
-database: 'testdb'
-});
+app.get('/', (req, res) => res.sendFile(require('path').join(__dirname, 'index.html')));
 
-client.connect();
+app.get('/todos', async (req, res) => res.json((await db.query('SELECT * FROM todos')).rows));
 
-// create table
-client.query(`
-   CREATE TABLE IF NOT EXISTS todos (
-     id SERIAL PRIMARY KEY,
-     task TEXT
-     )
-`);
+app.post('/add', async (req, res) => { await db.query('INSERT INTO todos(task) VALUES($1)', [req.body.task]); res.sendStatus(200); });
 
-// add task
-app.post('/add', async (req, res) => {
-    const { task } = req.body;
-    await client.query('INSERT INTO todos(task) VALUES($1)', [task]);
-    res.send("Task added");
-});
+app.delete('/delete/:id', async (req, res) => { await db.query('DELETE FROM todos WHERE id=$1', [req.params.id]); res.sendStatus(200); });
 
-// get tasks
-app.get('/todos', async (req, res) => {
-    const result = await client.query('SELECT * FROM todos');
-    res.json(result.rows);
-});
+app.listen(3000);
 
-// delete task
-app.delete('/delete/:id', async (req, res) => {
-    await client.query('DELETE FROM todos WHERE id=$1', [req.params.id]);
-    res.send("Task deleted");
-});
-
-app.listen(3000, () => {
-    console.log('Server running');
-});
-
- 
  
