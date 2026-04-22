@@ -3,6 +3,7 @@ const { Client } = require('pg');
 
 const app = express();
 app.use(express.json());
+app.use(express.static('.'));
 
 const client = new Client({
 host: 'db',
