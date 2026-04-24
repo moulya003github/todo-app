@@ -4,44 +4,41 @@ const { Pool } = require('pg');
 
 const app = express();
 
-const db = new Pool({ user: 'postgres', host: 'db', database: 'testdb', password: 'password', port: 5432 });
-
-async function start() {
-
-  while (true) {
-
-    try {
-
-      await db.query('CREATE TABLE IF NOT EXISTS todos (id SERIAL PRIMARY KEY, task TEXT)');
-
-      console.log("DB Connected");
-
-      break;
-
-    } catch (e) {
-
-      console.log("Waiting for DB...");
-
-      await new Promise(r => setTimeout(r, 3000));
-
-    }
-
-  }
-
-}
-
-start();
-
 app.use(express.json());
 
-app.get('/', (req, res) => res.sendFile(require('path').join(__dirname, 'index.html')));
+app.use(express.static(__dirname)); 
 
-app.get('/todos', async (req, res) => res.json((await db.query('SELECT * FROM todos')).rows));
+const pool = new Pool({
 
-app.post('/add', async (req, res) => { await db.query('INSERT INTO todos(task) VALUES($1)', [req.body.task]); res.sendStatus(200); });
+    user: 'postgres',
 
-app.delete('/delete/:id', async (req, res) => { await db.query('DELETE FROM todos WHERE id=$1', [req.params.id]); res.sendStatus(200); });
+    host: '172.17.0.1', 
 
-app.listen(3000);
+    database: 'todo_db',
+
+    password: 'devops123',
+
+    port: 5432,
+
+});
+
+app.get('/todos', async (req, res) => {
+
+    const result = await pool.query('SELECT * FROM todos');
+
+    res.json(result.rows);
+
+});
+
+app.post('/add', async (req, res) => {
+
+    await pool.query('INSERT INTO todos (task) VALUES ($1)', [req.body.task]);
+
+    res.sendStatus(201);
+
+});
+
+app.listen(3000, () => console.log('Running on 3000'));
+ 
 
  
