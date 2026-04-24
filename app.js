@@ -12,7 +12,7 @@ const pool = new Pool({
 
     user: 'postgres',
 
-    host: '172.17.0.1', 
+    host: '13.201.57.220', 
 
     database: 'todo_db',
 
