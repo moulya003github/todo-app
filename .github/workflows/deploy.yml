@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: CI/CD Pipeline
 
 on:
 
@@ -10,13 +10,29 @@ on:
 
 jobs:
 
-  deploy:
+  build-and-deploy:
 
     runs-on: ubuntu-latest
 
     steps:
 
-      - name: Deploy via SSH
+      - name: Checkout
+
+        uses: actions/checkout@v3
+
+      - name: Login Docker
+
+        run: echo "${{ secrets.DOCKER_PASS }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
+
+      - name: Build Image
+
+        run: docker build -t ${{ secrets.DOCKER_USER }}/todo-app .
+
+      - name: Push Image
+
+        run: docker push ${{ secrets.DOCKER_USER }}/todo-app
+
+      - name: Deploy to EC2
 
         uses: appleboy/ssh-action@v1.0.0
 
@@ -30,9 +46,14 @@ jobs:
 
           script: |
 
-            cd ~/todo-app
-            git pull origin main
-            sudo docker compose up --build -d
+            sudo docker pull ${{ secrets.DOCKER_USER }}/todo-app
+
+            sudo docker stop todo || true
+
+            sudo docker rm todo || true
+
+            sudo docker run -d -p 3000:3000 --name todo ${{ secrets.DOCKER_USER }}/todo-app
+ 
  
 
  
