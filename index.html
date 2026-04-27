@@ -45,7 +45,7 @@
 
         async function deleteTask(id) {
 
-            await fetch(`/delete/${id}`, { method: 'DELETE' });
+            await fetch(`/todos/${id}`, { method: 'DELETE' });
 
             loadTasks();
 

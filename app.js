@@ -38,6 +38,27 @@ app.post('/add', async (req, res) => {
 
 });
 
+app.delete('/todos/:id', async (req, res) => {
+
+    const { id } = req.params;
+
+    try {
+
+        await pool.query('DELETE FROM todos WHERE id = $1', [id]);
+
+        res.sendStatus(204);
+
+    } catch (err) {
+
+        console.error(err.message);
+
+        res.status(500).send("Server Error");
+
+    }
+
+});
+ 
+
 app.listen(3000, () => console.log('Running on 3000'));
  
 
